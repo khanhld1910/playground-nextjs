@@ -1,16 +1,17 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 
-const Home: NextPage = () => {
+
+const Contact: NextPage = () => {
   return (
     <div className="container h-full mx-aut0">
       <Head>
-        <title>Home Page</title>
+        <title>Contact Page</title>
       </Head>
-      <main>Home page</main>
+      <main>Contact page</main>
       <footer>Footer</footer>
     </div>
   )
 }
 
-export default Home
+export default Contact
