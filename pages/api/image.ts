@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import axios from 'axios'
 import fs from 'fs'
+import tmp from 'tmp'
+
 
 //set bodyparser
 export const config = {
@@ -19,9 +21,11 @@ const updateFeaturePhoto = async (
       error: { message: 'Method not allowed' }
     })
   }
+  // create the tmp dir
+  const tmpObj = tmp.dirSync({unsafeCleanup: true})
   try {
     const parsedFormData = await new Promise((resolve, reject) => {
-      const form = new formidable.IncomingForm({ keepExtensions: true })
+      const form = new formidable.IncomingForm({ keepExtensions: true, uploadDir: tmpObj.name })
       form.parse(
         req,
         (
@@ -98,6 +102,7 @@ const updateFeaturePhoto = async (
     const responseBody = {
       statusCode: 200,
       image: url.origin + url.pathname,
+      dir: file.filepath,
       uploadData,
       uploadStatus,
     }
@@ -106,6 +111,9 @@ const updateFeaturePhoto = async (
   } catch (error) {
     console.log(error)
     res.status(400).json({ error })
+  } finally {
+    // clear the tmp dir
+    tmpObj.removeCallback()
   }
 }
 
