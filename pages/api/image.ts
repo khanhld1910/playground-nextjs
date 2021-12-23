@@ -48,18 +48,20 @@ const updateFeaturePhoto = async (
       userId: string
     }
 
-    // const response = await newApiClient.post(
-    //   '/getSignedUrl',
-    //   {
-    //     file_name: file.originalFilename,
-    //     content_type: file.mimetype
-    //   },
-    //   {
-    //     headers: createAuthHeaderFromApiRequest(req)
-    //   }
-    // )
+    const response = await axios.post(
+      'https://j7pzco1sdk.execute-api.us-east-1.amazonaws.com/staging/v1/getSignedUrl',
+      {
+        file_name: file.newFilename,
+        content_type: file.mimetype
+      },
+      {
+        headers: {
+          'Authorization' : "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImUxYTFmMWM5MmQ0NzQ5MjRhNjQ5MzQ3MmJlYjZhODQyIiwiYXVkIjoiaHR0cHM6Ly9qN3B6Y28xc2RrLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3N0YWdpbmcvIiwiaWF0IjoxNjQwMDQ3MTA3LCJleHAiOjE2NDc4MjMxMDd9.2EDXwmszqU3e8qNMF2G9KnixiGJvv8A0sstFyVUduHQ"
+        }
+      }
+    )
 
-    // const { data: presignedUrl } = response.data as BackEndApiResponseData
+    const { data: presignedUrl } = response.data as { data: string }
     // const url = new URL(presignedUrl)
 
     // await Promise.all([
@@ -87,6 +89,7 @@ const updateFeaturePhoto = async (
       file,
       imageLocation,
       userId,
+      presignedUrl,
     }
 
     res.status(200).json(responseBody)
