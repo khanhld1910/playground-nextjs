@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import axios from 'axios'
+import fs from 'fs'
 
 //set bodyparser
 export const config = {
@@ -19,13 +20,8 @@ const updateFeaturePhoto = async (
     })
   }
   try {
-    let imageBuffer: Buffer
-
     const parsedFormData = await new Promise((resolve, reject) => {
       const form = new formidable.IncomingForm({ keepExtensions: true })
-      form.on('data', data => {
-        imageBuffer = Buffer.from(data.buffer)
-      })
       form.parse(
         req,
         (
@@ -48,48 +44,62 @@ const updateFeaturePhoto = async (
       userId: string
     }
 
-    const response = await axios.post(
-      'https://j7pzco1sdk.execute-api.us-east-1.amazonaws.com/staging/v1/getSignedUrl',
-      {
-        file_name: file.newFilename,
-        content_type: file.mimetype
-      },
-      {
-        headers: {
-          'Authorization' : "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImUxYTFmMWM5MmQ0NzQ5MjRhNjQ5MzQ3MmJlYjZhODQyIiwiYXVkIjoiaHR0cHM6Ly9qN3B6Y28xc2RrLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3N0YWdpbmcvIiwiaWF0IjoxNjQwMDQ3MTA3LCJleHAiOjE2NDc4MjMxMDd9.2EDXwmszqU3e8qNMF2G9KnixiGJvv8A0sstFyVUduHQ"
+    const [
+      response,
+      imageBuffer,
+    ] = await Promise.all([
+      await axios.post(
+        'https://j7pzco1sdk.execute-api.us-east-1.amazonaws.com/staging/v1/getSignedUrl',
+        {
+          file_name: file.newFilename,
+          content_type: file.mimetype
+        },
+        {
+          headers: {
+            'Authorization' : "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImUxYTFmMWM5MmQ0NzQ5MjRhNjQ5MzQ3MmJlYjZhODQyIiwiYXVkIjoiaHR0cHM6Ly9qN3B6Y28xc2RrLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3N0YWdpbmcvIiwiaWF0IjoxNjQwMDQ3MTA3LCJleHAiOjE2NDc4MjMxMDd9.2EDXwmszqU3e8qNMF2G9KnixiGJvv8A0sstFyVUduHQ"
+          }
         }
-      }
-    )
+      ),
+      new Promise((resolve, reject) =>
+        fs.readFile(file.filepath, (err, data) => {
+          if (err) {
+            return reject(err)
+          }
+          resolve(data)
+        })
+      ),
+    ])
 
     const { data: presignedUrl } = response.data as { data: string }
-    // const url = new URL(presignedUrl)
+    const url = new URL(presignedUrl)
 
-    // await Promise.all([
-    //   axios.put(presignedUrl, imageBuffer!, {
-    //     headers: {
-    //       'Content-Type': file.mimetype!
-    //     }
-    //   }),
+    const [
+      { data: uploadData, status: uploadStatus }
+    ] = await Promise.all([
+      axios.put(presignedUrl, imageBuffer!, {
+        headers: {
+          'Content-Type': file.mimetype!
+        }
+      }),
 
-    //   newApiClient.post(
-    //     '/saveProfileImage',
-    //     {
-    //       id: userId,
-    //       image: url.origin + url.pathname,
-    //       image_location: imageLocation
-    //     },
-    //     {
-    //       headers: createAuthHeaderFromApiRequest(req)
-    //     }
-    //   )
-    // ])
+      // newApiClient.post(
+      //   '/saveProfileImage',
+      //   {
+      //     id: userId,
+      //     image: url.origin + url.pathname,
+      //     image_location: imageLocation
+      //   },
+      //   {
+      //     headers: createAuthHeaderFromApiRequest(req)
+      //   }
+      // )
+    ])
 
     const responseBody = {
       statusCode: 200,
-      file,
-      imageLocation,
-      userId,
-      presignedUrl,
+      image: url.origin + url.pathname,
+      uploadData,
+      uploadStatus,
     }
 
     res.status(200).json(responseBody)
