@@ -27,6 +27,11 @@ const Header = () => {
               <a>Contact</a>
             </Link>
           </li>
+          <li className="hover:underline">
+            <Link href="/protected" passHref>
+              <a>Protected</a>
+            </Link>
+          </li>
           <li className="cursor-pointer hover:underline">
             <Link href="/login" passHref>
               <a>Login</a>
